@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EPIJudge - C0/C1</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Roboto", "Segoe UI", Arial, sans-serif;
+        background: #f5f5f5;
+      }
+
+      header {
+        background: #002f6c;
+        color: white;
+        padding: 20px 40px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        font-size: 2rem;
+        font-weight: 300;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #ddd;
+      }
+
+      .tab {
+        padding: 15px 30px;
+        background: white;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #666;
+        border-radius: 4px 4px 0 0;
+        transition: all 0.3s;
+      }
+
+      .tab:hover {
+        background: #e8eaf6;
+        color: #002f6c;
+      }
+
+      .tab.active {
+        background: #002f6c;
+        color: white;
+        border-bottom: 2px solid #002f6c;
+        margin-bottom: -2px;
+      }
+
+      .content {
+        display: none;
+      }
+
+      .content.active {
+        display: block;
+      }
+
+      .questions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+      }
+
+      .question-card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      .question-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      }
+
+      .question-title {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #002f6c;
+        margin-bottom: 10px;
+      }
+
+      .question-number {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 8px;
+      }
+
+      .languages {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        font-size: 0.85rem;
+        color: #888;
+      }
+
+      .no-data {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+        font-size: 1.1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>EPIJudge - C0 & C1 Problems</h1>
+    </header>
+
+    <div class="container">
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('c0')">C0</button>
+        <button class="tab" onclick="showTab('c1')">C1</button>
+      </div>
+
+      <div id="c0-content" class="content active">
+        <div id="c0-questions" class="questions-grid"></div>
+      </div>
+
+      <div id="c1-content" class="content">
+        <div id="c1-questions" class="questions-grid"></div>
+      </div>
+    </div>
+    <script src="problem_mapping.js"></script>
+    <script>
+      // C0 and C1 problem mappings
+      const c0Problems = [
+        "4.01",
+        "5.01",
+        "5.06",
+        "6.01",
+        "7.01",
+        "8.01",
+        "9.01",
+        "10.01",
+        "11.01",
+        "12.02",
+        "13.01",
+        "14.01",
+        "15.01",
+        "16.01",
+        "17.04",
+        "18.01",
+        "19.03",
+        "20.13",
+      ];
+      const c1Problems = [
+        "4.07",
+        "5.12",
+        "5.18",
+        "6.02",
+        "6.04",
+        "7.02",
+        "7.03",
+        "8.06",
+        "9.04",
+        "10.04",
+        "11.04",
+        "11.08",
+        "12.03",
+        "12.05",
+        "13.02",
+        "14.02",
+        "14.03",
+        "15.02",
+        "16.02",
+        "17.06",
+        "18.07",
+        "19.06",
+        "20.15",
+      ];
+
+      // Sample problem data structure (replace with your actual problem_mapping)
+
+      function extractProblemNumber(problemTitle) {
+        const match = problemTitle.match(/(\d+)\.(\d+)/);
+        return match ? `${match[1]}.${match[2]}` : null;
+      }
+
+      function filterProblems(problemsList) {
+        const filtered = [];
+
+        for (const [chapter, problems] of Object.entries(problem_mapping)) {
+          for (const [problemTitle, languages] of Object.entries(problems)) {
+            const problemNum = extractProblemNumber(problemTitle);
+
+            if (problemNum && problemsList.includes(problemNum)) {
+              filtered.push({
+                chapter,
+                problemNum,
+                title: problemTitle,
+                languages: Object.keys(languages),
+              });
+            }
+          }
+        }
+
+        return filtered.sort((a, b) => {
+          const [aChap, aNum] = a.problemNum.split(".").map(Number);
+          const [bChap, bNum] = b.problemNum.split(".").map(Number);
+          return aChap - bChap || aNum - bNum;
+        });
+      }
+
+      function renderProblems(problems, containerId) {
+        const container = document.getElementById(containerId);
+
+        if (problems.length === 0) {
+          container.innerHTML = '<div class="no-data">No problems found</div>';
+          return;
+        }
+
+        container.innerHTML = problems
+          .map(
+            (problem) => `
+        <div class="question-card">
+          <div class="question-number">${problem.problemNum}</div>
+          <div class="question-title">${problem.title.replace(
+            /^\d+\.\d+\s*/,
+            ""
+          )}</div>
+          <div class="languages">
+            ${problem.languages
+              .map((lang) => `<span>• ${lang}</span>`)
+              .join("")}
+          </div>
+        </div>
+      `
+          )
+          .join("");
+      }
+
+      function showTab(tab) {
+        // Update tab buttons
+        document
+          .querySelectorAll(".tab")
+          .forEach((t) => t.classList.remove("active"));
+        event.target.classList.add("active");
+
+        // Update content
+        document
+          .querySelectorAll(".content")
+          .forEach((c) => c.classList.remove("active"));
+        document.getElementById(`${tab}-content`).classList.add("active");
+      }
+
+      // Initialize
+      const c0Filtered = filterProblems(c0Problems);
+      const c1Filtered = filterProblems(c1Problems);
+
+      renderProblems(c0Filtered, "c0-questions");
+      renderProblems(c1Filtered, "c1-questions");
+    </script>
+  </body>
+</html>
